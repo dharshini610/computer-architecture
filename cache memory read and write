@@ -1,0 +1,74 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+// Define the structure for a cache block
+typedef struct {
+    int tag; // Tag of the block
+    int valid; // 1 if the block is valid, 0 otherwise
+    int data; // Data stored in the block
+} cache_block;
+
+// Define the structure for the cache
+typedef struct {
+    int size; // Size of the cache (in blocks)
+    cache_block* blocks; // Array of cache blocks
+} cache;
+
+// Function to initialize the cache
+void init_cache(cache* c, int size) {
+    c->size = size;
+    c->blocks = (cache_block*)malloc(size * sizeof(cache_block));
+    for (int i = 0; i < size; i++) {
+        c->blocks[i].tag = -1; // Initialize tag to -1
+        c->blocks[i].valid = 0; // Initialize valid bit to 0
+    }
+}
+
+// Function to read from the cache
+int read_cache(cache* c, int address) {
+    int tag = address / 4; // Calculate the tag from the address
+    int index = address % 4; // Calculate the index from the address
+    if (c->blocks[index].valid == 1 && c->blocks[index].tag == tag) {
+        printf("Cache hit! Data: %d\n", c->blocks[index].data);
+        return c->blocks[index].data;
+    } else {
+        printf("Cache miss! Reading from main memory...\n");
+        // Simulate reading from main memory (replace with actual main memory read)
+        int data = address * 2; // Simulated main memory read
+        c->blocks[index].tag = tag;
+        c->blocks[index].valid = 1;
+        c->blocks[index].data = data;
+        return data;
+    }
+}
+
+// Function to write to the cache
+void write_cache(cache* c, int address, int data) {
+    int tag = address / 4; // Calculate the tag from the address
+    int index = address % 4; // Calculate the index from the address
+    if (c->blocks[index].valid == 1 && c->blocks[index].tag == tag) {
+        printf("Cache hit! Writing to cache...\n");
+        c->blocks[index].data = data;
+    } else {
+        printf("Cache miss! Writing to main memory...\n");
+        // Simulate writing to main memory (replace with actual main memory write)
+        printf("Main memory write: address %d, data %d\n", address, data);
+        c->blocks[index].tag = tag;
+        c->blocks[index].valid = 1;
+        c->blocks[index].data = data;
+    }
+}
+
+int main() {
+    cache c;
+    init_cache(&c, 4); // Initialize a cache with 4 blocks
+
+    read_cache(&c, 0); // Read from address 0
+    read_cache(&c, 4); // Read from address 4
+    read_cache(&c, 0); // Read from address 0 again (cache hit)
+
+    write_cache(&c, 8, 10); // Write to address 8
+    read_cache(&c, 8); // Read from address 8 (cache hit)
+
+    return 0;
+}
