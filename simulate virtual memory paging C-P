@@ -1,0 +1,97 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+// Define the size of the physical memory (in pages)
+#define PHYSICAL_MEMORY_SIZE 10
+
+// Define the size of the virtual memory (in pages)
+#define VIRTUAL_MEMORY_SIZE 20
+
+// Define the page size (in bytes)
+#define PAGE_SIZE 1024
+
+// Define the structure for a page table entry
+typedef struct {
+    int frame_number; // Frame number in physical memory
+    int valid; // 1 if the page is in physical memory, 0 otherwise
+} page_table_entry;
+
+// Define the structure for a page
+typedef struct {
+    int page_number; // Page number in virtual memory
+    char data[PAGE_SIZE]; // Data stored in the page
+} page;
+
+// Function to initialize the page table
+void init_page_table(page_table_entry *page_table, int size) {
+    for (int i = 0; i < size; i++) {
+        page_table[i].frame_number = -1; // Initialize frame number to -1
+        page_table[i].valid = 0; // Initialize valid bit to 0
+    }
+}
+
+// Function to simulate a page fault
+void page_fault(page_table_entry *page_table, int page_number, page *pages) {
+    // Find a free frame in physical memory
+    int frame_number = -1;
+    for (int i = 0; i < PHYSICAL_MEMORY_SIZE; i++) {
+        if (page_table[i].valid == 0) {
+            frame_number = i;
+            break;
+        }
+    }
+
+    // If no free frame is found, replace a page using LRU algorithm
+    if (frame_number == -1) {
+        int lru_page = -1;
+        int lru_time = -1;
+        for (int i = 0; i < PHYSICAL_MEMORY_SIZE; i++) {
+            if (page_table[i].valid == 1 && page_table[i].frame_number < lru_time) {
+                lru_page = i;
+                lru_time = page_table[i].frame_number;
+            }
+        }
+        frame_number = lru_page;
+    }
+
+    // Update the page table entry
+    page_table[page_number].frame_number = frame_number;
+    page_table[page_number].valid = 1;
+
+    // Copy the page from virtual memory to physical memory
+    pages[frame_number] = pages[page_number];
+}
+
+// Function to simulate a page access
+void page_access(page_table_entry *page_table, int page_number, page *pages) {
+    // Check if the page is in physical memory
+    if (page_table[page_number].valid == 1) {
+        printf("Page %d is in physical memory\n", page_number);
+    } else {
+        printf("Page fault! Page %d is not in physical memory\n", page_number);
+        page_fault(page_table, page_number, pages);
+    }
+}
+
+int main() {
+    // Initialize the page table
+    page_table_entry page_table[VIRTUAL_MEMORY_SIZE];
+    init_page_table(page_table, VIRTUAL_MEMORY_SIZE);
+
+    // Initialize the pages
+    page pages[VIRTUAL_MEMORY_SIZE];
+    for (int i = 0; i < VIRTUAL_MEMORY_SIZE; i++) {
+        pages[i].page_number = i;
+        for (int j = 0; j < PAGE_SIZE; j++) {
+            pages[i].data[j] = 'a' + (i * PAGE_SIZE + j) % 26;
+        }
+    }
+
+    // Simulate page accesses
+    page_access(page_table, 5, pages);
+    page_access(page_table, 10, pages);
+    page_access(page_table, 5, pages);
+    page_access(page_table, 15, pages);
+
+    return 0;
+}
