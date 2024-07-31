@@ -1,0 +1,102 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+// Define the structure for the bus
+typedef struct {
+    int bus_id; // Bus ID
+    int num_devices; // Number of devices connected to the bus
+    int* device_ids; // Array of device IDs
+    int current_device; // Current device index
+} bus;
+
+// Define the structure for a device
+typedef struct {
+    int device_id; // Device ID
+    int bus_id; // Bus ID
+    int request; // Request flag (1 if device is requesting bus access)
+} device;
+
+// Function to initialize the bus
+void init_bus(bus* b, int bus_id, int num_devices) {
+    b->bus_id = bus_id;
+    b->num_devices = num_devices;
+    b->device_ids = (int*)malloc(num_devices * sizeof(int));
+    b->current_device = 0;
+}
+
+// Function to initialize a device
+void init_device(device* d, int device_id, int bus_id) {
+    d->device_id = device_id;
+    d->bus_id = bus_id;
+    d->request = 0;
+}
+
+// Function to simulate round-robin bus arbitration
+void simulate_bus_arbitration(bus* b, device* devices) {
+    int num_devices = b->num_devices;
+    int* device_ids = b->device_ids;
+
+    // Simulate round-robin bus arbitration
+    while (1) {
+        // Check if any device is requesting bus access
+        int request_found = 0;
+        for (int i = 0; i < num_devices; i++) {
+            int device_id = device_ids[i];
+            device* d = &devices[device_id];
+            if (d->request) {
+                request_found = 1;
+                break;
+            }
+        }
+
+        // If no device is requesting bus access, exit
+        if (!request_found) {
+            break;
+        }
+
+        // Grant the bus to the current device
+        int current_device_id = device_ids[b->current_device];
+        device* current_device = &devices[current_device_id];
+        if (current_device->request) {
+            printf("Bus %d granted to device %d\n", b->bus_id, current_device_id);
+            current_device->request = 0;
+        }
+
+        // Move to the next device
+        b->current_device = (b->current_device + 1) % num_devices;
+    }
+}
+
+// Function to request bus access
+void request_bus_access(device* d) {
+    d->request = 1;
+}
+
+int main() {
+    bus b;
+    init_bus(&b, 1, 5);
+
+    device devices[5];
+    init_device(&devices[0], 0, 1);
+    init_device(&devices[1], 1, 1);
+    init_device(&devices[2], 2, 1);
+    init_device(&devices[3], 3, 1);
+    init_device(&devices[4], 4, 1);
+
+    b.device_ids[0] = 0;
+    b.device_ids[1] = 1;
+    b.device_ids[2] = 2;
+    b.device_ids[3] = 3;
+    b.device_ids[4] = 4;
+
+    // Simulate device requests
+    request_bus_access(&devices[0]);
+    request_bus_access(&devices[2]);
+    request_bus_access(&devices[4]);
+    request_bus_access(&devices[1]);
+    request_bus_access(&devices[3]);
+
+    simulate_bus_arbitration(&b, devices);
+
+    return 0;
+}
