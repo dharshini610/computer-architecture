@@ -1,0 +1,89 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+// Define the structure for the bus
+typedef struct {
+    int bus_id; // Bus ID
+    int num_devices; // Number of devices connected to the bus
+    device* devices; // Array of devices
+} bus;
+
+// Define the structure for a device
+typedef struct {
+    int device_id; // Device ID
+    int bus_id; // Bus ID
+    int priority; // Priority of the device (higher is higher priority)
+    int request; // Request flag (1 if device is requesting bus access)
+} device;
+
+// Function to initialize the bus
+void init_bus(bus* b, int bus_id, int num_devices) {
+    b->bus_id = bus_id;
+    b->num_devices = num_devices;
+    b->devices = (device*)malloc(num_devices * sizeof(device));
+}
+
+// Function to initialize a device
+void init_device(device* d, int device_id, int bus_id, int priority) {
+    d->device_id = device_id;
+    d->bus_id = bus_id;
+    d->priority = priority;
+    d->request = 0;
+}
+
+// Function to simulate fixed priority bus arbitration
+void simulate_bus_arbitration(bus* b) {
+    int num_devices = b->num_devices;
+    device* devices = b->devices;
+
+    // Sort devices by priority in descending order
+    for (int i = 0; i < num_devices; i++) {
+        for (int j = i + 1; j < num_devices; j++) {
+            if (devices[i].priority < devices[j].priority) {
+                device temp = devices[i];
+                devices[i] = devices[j];
+                devices[j] = temp;
+            }
+        }
+    }
+
+    // Grant the bus to the highest priority device that is requesting access
+    for (int i = 0; i < num_devices; i++) {
+        device* d = &devices[i];
+        if (d->request) {
+            printf("Bus %d granted to device %d (priority %d)\n", b->bus_id, d->device_id, d->priority);
+            d->request = 0;
+            break;
+        }
+    }
+}
+
+// Function to request bus access
+void request_bus_access(device* d) {
+    d->request = 1;
+}
+
+int main() {
+    bus b;
+    init_bus(&b, 1, 5);
+
+    device devices[5];
+    init_device(&devices[0], 0, 1, 3);
+    init_device(&devices[1], 1, 1, 2);
+    init_device(&devices[2], 2, 1, 1);
+    init_device(&devices[3], 3, 1, 4);
+    init_device(&devices[4], 4, 1, 5);
+
+    b.devices = devices;
+
+    // Simulate device requests
+    request_bus_access(&devices[0]);
+    request_bus_access(&devices[2]);
+    request_bus_access(&devices[4]);
+    request_bus_access(&devices[1]);
+    request_bus_access(&devices[3]);
+
+    simulate_bus_arbitration(&b);
+
+    return 0;
+}
