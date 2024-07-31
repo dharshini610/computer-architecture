@@ -1,0 +1,91 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+// Define the structure for the simulated I/O device
+typedef struct {
+    int device_id; // Unique device ID
+    char* device_name; // Device name
+    int buffer_size; // Size of the device buffer
+    char* buffer; // Device buffer
+} io_device;
+
+// Define the structure for the device driver
+typedef struct {
+    io_device* device; // Pointer to the I/O device
+} device_driver;
+
+// Function to initialize the I/O device
+void init_device(io_device* device, int device_id, char* device_name, int buffer_size) {
+    device->device_id = device_id;
+    device->device_name = device_name;
+    device->buffer_size = buffer_size;
+    device->buffer = (char*)malloc(buffer_size * sizeof(char));
+}
+
+// Function to initialize the device driver
+void init_driver(device_driver* driver, io_device* device) {
+    driver->device = device;
+}
+
+// Function to read from the device
+int read_device(device_driver* driver, char* buffer, int size) {
+    if (size > driver->device->buffer_size) {
+        printf("Error: Read size exceeds device buffer size\n");
+        return -1;
+    }
+    printf("Reading from device %s...\n", driver->device->device_name);
+    // Simulate reading from the device (replace with actual device read)
+    for (int i = 0; i < size; i++) {
+        buffer[i] = driver->device->buffer[i];
+    }
+    return size;
+}
+
+// Function to write to the device
+int write_device(device_driver* driver, char* buffer, int size) {
+    if (size > driver->device->buffer_size) {
+        printf("Error: Write size exceeds device buffer size\n");
+        return -1;
+    }
+    printf("Writing to device %s...\n", driver->device->device_name);
+    // Simulate writing to the device (replace with actual device write)
+    for (int i = 0; i < size; i++) {
+        driver->device->buffer[i] = buffer[i];
+    }
+    return size;
+}
+
+// Function to control the device
+int control_device(device_driver* driver, int command) {
+    printf("Controlling device %s...\n", driver->device->device_name);
+    // Simulate controlling the device (replace with actual device control)
+    if (command == 1) {
+        printf("Device turned on\n");
+    } else if (command == 0) {
+        printf("Device turned off\n");
+    } else {
+        printf("Invalid command\n");
+    }
+    return 0;
+}
+
+int main() {
+    io_device device;
+    init_device(&device, 1, "Simulated Device", 10);
+
+    device_driver driver;
+    init_driver(&driver, &device);
+
+    char buffer[10];
+    read_device(&driver, buffer, 5);
+    printf("Read data: %s\n", buffer);
+
+    char write_buffer[] = "Hello";
+    write_device(&driver, write_buffer, 5);
+    printf("Written data: %s\n", device.buffer);
+
+    control_device(&driver, 1);
+    control_device(&driver, 0);
+
+    return 0;
+}
