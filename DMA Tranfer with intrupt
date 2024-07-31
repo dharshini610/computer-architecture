@@ -1,0 +1,72 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+// Define the structure for the DMA controller
+typedef struct {
+    int dma_channel; // DMA channel number
+    int transfer_size; // Size of the transfer
+    char* transfer_buffer; // Buffer for the transfer
+    int interrupt_enabled; // Flag to enable interrupts
+} dma_controller;
+
+// Define the structure for the interrupt handler
+typedef struct {
+    dma_controller* dma; // Pointer to the DMA controller
+    void (*interrupt_handler)(dma_controller*); // Interrupt handler function
+} interrupt_handler;
+
+// Function to initialize the DMA controller
+void init_dma(dma_controller* dma, int dma_channel, int transfer_size) {
+    dma->dma_channel = dma_channel;
+    dma->transfer_size = transfer_size;
+    dma->transfer_buffer = (char*)malloc(transfer_size * sizeof(char));
+    dma->interrupt_enabled = 1;
+}
+
+// Function to initialize the interrupt handler
+void init_interrupt_handler(interrupt_handler* handler, dma_controller* dma, void (*interrupt_handler)(dma_controller*)) {
+    handler->dma = dma;
+    handler->interrupt_handler = interrupt_handler;
+}
+
+// Function to start the DMA transfer
+void start_dma_transfer(dma_controller* dma) {
+    printf("Starting DMA transfer on channel %d...\n", dma->dma_channel);
+    // Simulate the DMA transfer (replace with actual DMA transfer)
+    for (int i = 0; i < dma->transfer_size; i++) {
+        dma->transfer_buffer[i] = 'A' + i; // Simulate data transfer
+    }
+    // Raise an interrupt to notify the completion of the transfer
+    raise_interrupt(dma);
+}
+
+// Function to raise an interrupt
+void raise_interrupt(dma_controller* dma) {
+    if (dma->interrupt_enabled) {
+        printf("Raising interrupt for DMA channel %d...\n", dma->dma_channel);
+        // Call the interrupt handler function
+        dma->interrupt_handler(dma);
+    }
+}
+
+// Interrupt handler function
+void dma_interrupt_handler(dma_controller* dma) {
+    printf("DMA transfer complete on channel %d!\n", dma->dma_channel);
+    // Process the transferred data
+    for (int i = 0; i < dma->transfer_size; i++) {
+        printf("%c", dma->transfer_buffer[i]);
+    }
+    printf("\n");
+}
+
+int main() {
+    dma_controller dma;
+    init_dma(&dma, 1, 10);
+
+    interrupt_handler handler;
+    init_interrupt_handler(&handler, &dma, dma_interrupt_handler);
+
+    start_dma_transfer(&dma);
+
+    return 0;
+}
