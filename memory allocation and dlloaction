@@ -1,0 +1,92 @@
+#include <stdio.h>
+#include <stdlib.h>
+typedef struct {
+    int size; // Size of the memory block
+    int free; // 1 if the block is free, 0 otherwise
+    struct memory_block* next; // Pointer to the next memory block
+} memory_block;
+typedef struct {
+    memory_block* head; // Pointer to the first memory block
+} memory_manager;
+void init_memory_manager(memory_manager* mm, int total_memory) {
+    mm->head = (memory_block*)malloc(sizeof(memory_block));
+    mm->head->size = total_memory;
+    mm->head->free = 1;
+    mm->head->next = NULL;
+}
+void* allocate_memory(memory_manager* mm, int size) {
+    memory_block* current = mm->head;
+    while (current != NULL) {
+        if (current->free == 1 && current->size >= size) {
+
+            if (current->size > size) {
+                memory_block* new_block = (memory_block*)malloc(sizeof(memory_block));
+                new_block->size = current->size - size;
+                new_block->free = 1;
+                new_block->next = current->next;
+                current->size = size;
+                current->next = new_block;
+            }
+            current->free = 0;
+            return (void*)((char*)current + sizeof(memory_block));
+        }
+        current = current->next;
+    }
+    printf("Out of memory!\n");
+    return NULL;
+}
+
+// Function to deallocate memory
+void deallocate_memory(memory_manager* mm, void* ptr) {
+    memory_block* current = mm->head;
+    while (current != NULL) {
+        if ((void*)((char*)current + sizeof(memory_block)) == ptr) {
+            current->free = 1;
+            // Merge adjacent free blocks
+            if (current->next != NULL && current->next->free == 1) {
+                current->size += current->next->size;
+                current->next = current->next->next;
+            }
+            return;
+        }
+        current = current->next;
+    }
+    printf("Invalid pointer!\n");
+}
+
+// Function to print the memory layout
+void print_memory_layout(memory_manager* mm) {
+    memory_block* current = mm->head;
+    printf("Memory layout:\n");
+    while (current != NULL) {
+        printf("  Block size: %d, Free: %d\n", current->size, current->free);
+        current = current->next;
+    }
+}
+
+int main() {
+    memory_manager mm;
+    init_memory_manager(&mm, 1024);
+
+    print_memory_layout(&mm);
+
+    int* ptr1 = (int*)allocate_memory(&mm, sizeof(int));
+    *ptr1 = 10;
+
+    print_memory_layout(&mm);
+
+    int* ptr2 = (int*)allocate_memory(&mm, sizeof(int));
+    *ptr2 = 20;
+
+    print_memory_layout(&mm);
+
+    deallocate_memory(&mm, ptr1);
+
+    print_memory_layout(&mm);
+
+    deallocate_memory(&mm, ptr2);
+
+    print_memory_layout(&mm);
+
+    return 0;
+}
