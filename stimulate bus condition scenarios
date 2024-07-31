@@ -1,0 +1,114 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+// Define the structure for the bus
+typedef struct {
+    int bus_id; // Bus ID
+    int bus_speed; // Bus speed (in MHz)
+    int num_devices; // Number of devices connected to the bus
+    int* device_ids; // Array of device IDs
+} bus;
+
+// Define the structure for a device
+typedef struct {
+    int device_id; // Device ID
+    int bus_id; // Bus ID
+    int priority; // Priority of the device (higher is higher priority)
+} device;
+
+// Function to initialize the bus
+void init_bus(bus* b, int bus_id, int bus_speed, int num_devices) {
+    b->bus_id = bus_id;
+    b->bus_speed = bus_speed;
+    b->num_devices = num_devices;
+    b->device_ids = (int*)malloc(num_devices * sizeof(int));
+}
+
+// Function to initialize a device
+void init_device(device* d, int device_id, int bus_id, int priority) {
+    d->device_id = device_id;
+    d->bus_id = bus_id;
+    d->priority = priority;
+}
+
+// Function to simulate bus contention
+void simulate_bus_contention(bus* b, device* devices) {
+    int num_devices = b->num_devices;
+    int* device_ids = b->device_ids;
+
+    // Simulate bus contention by generating random requests from devices
+    for (int i = 0; i < num_devices; i++) {
+        int device_id = device_ids[i];
+        device* d = &devices[device_id];
+        int request_time = rand() % 100; // Simulate request time
+
+        // Check if the bus is available
+        if (is_bus_available(b)) {
+            // Grant the bus to the device
+            grant_bus(b, d);
+            printf("Device %d granted bus access at time %d\n", device_id, request_time);
+        } else {
+            // Bus is not available, resolve contention
+            resolve_bus_contention(b, d);
+        }
+    }
+}
+
+// Function to check if the bus is available
+int is_bus_available(bus* b) {
+    // Simulate bus availability by checking if the bus is idle
+    return (rand() % 2) == 0;
+}
+
+// Function to grant the bus to a device
+void grant_bus(bus* b, device* d) {
+    // Simulate granting the bus to the device
+    printf("Bus %d granted to device %d\n", b->bus_id, d->device_id);
+}
+
+// Function to resolve bus contention
+void resolve_bus_contention(bus* b, device* d) {
+    // Simulate resolving bus contention using a priority-based arbitration scheme
+    int priority = d->priority;
+    int winner_id = -1;
+    int max_priority = 0;
+
+    // Find the device with the highest priority
+    for (int i = 0; i < b->num_devices; i++) {
+        int device_id = b->device_ids[i];
+        device* winner = &devices[device_id];
+        if (winner->priority > max_priority) {
+            max_priority = winner->priority;
+            winner_id = device_id;
+        }
+    }
+
+    // Grant the bus to the device with the highest priority
+    grant_bus(b, &devices[winner_id]);
+    printf("Bus %d granted to device %d (winner of arbitration)\n", b->bus_id, winner_id);
+}
+
+int main() {
+    srand(time(NULL)); // Initialize random number generator
+
+    bus b;
+    init_bus(&b, 1, 100, 5);
+
+    device devices[5];
+    init_device(&devices[0], 0, 1, 3);
+    init_device(&devices[1], 1, 1, 2);
+    init_device(&devices[2], 2, 1, 1);
+    init_device(&devices[3], 3, 1, 4);
+    init_device(&devices[4], 4, 1, 5);
+
+    b.device_ids[0] = 0;
+    b.device_ids[1] = 1;
+    b.device_ids[2] = 2;
+    b.device_ids[3] = 3;
+    b.device_ids[4] = 4;
+
+    simulate_bus_contention(&b, devices);
+
+    return 0;
+}
